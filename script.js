@@ -166,8 +166,12 @@ function displayWeather(data) {
   const weatherIcon = document.getElementById("weatherIcon");
   const iconCode = weather?.icon || "01d";
 
-  weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+  weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
   weatherIcon.alt = weather?.description || "Weather Icon";
+
+  weatherIcon.onerror = function () {
+    this.style.display = "none";
+  };
 
   showWeatherCard();
 
