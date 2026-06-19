@@ -459,3 +459,56 @@ body {
     height: 240px;
   }
 }
+/* ===== FIX DESKTOP LAYOUT - KHÔNG BỊ KÉO DÀI XUỐNG ===== */
+
+@media (min-width: 900px) {
+  .app {
+    align-items: flex-start;
+    padding-top: 36px;
+    padding-bottom: 36px;
+  }
+
+  .weather-container {
+    max-width: 1050px;
+  }
+
+  .weather-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+    grid-template-areas:
+      "top map"
+      "temp map"
+      "details map";
+    gap: 18px;
+    align-items: start;
+  }
+
+  .weather-top {
+    grid-area: top;
+    margin-bottom: 0;
+  }
+
+  .temperature-box {
+    grid-area: temp;
+    margin: 0;
+  }
+
+  .details-grid {
+    grid-area: details;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .map-section {
+    grid-area: map;
+    margin-top: 0;
+    height: 100%;
+  }
+
+  #map {
+    height: 430px;
+  }
+
+  .temperature {
+    font-size: 66px;
+  }
+}
