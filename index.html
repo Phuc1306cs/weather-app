@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <div class="container">
+      <header class="header">
+        <h1>☁️ Weather App</h1>
+        <p>Tra cứu thời tiết hiện tại theo tên thành phố</p>
+      </header>
+
+      <form id="searchForm" class="search-box">
+        <input
+          type="text"
+          id="cityInput"
+          placeholder="Nhập tên thành phố..."
+          autocomplete="off"
+        />
+        <button type="submit">Tìm kiếm</button>
+      </form>
+
+      <div id="loading" class="loading hidden">
+        Đang tải dữ liệu thời tiết...
+      </div>
+
+      <div id="errorMessage" class="error hidden"></div>
+
+      <section id="weatherCard" class="weather-card hidden">
+        <div class="weather-main">
+          <h2 id="location"></h2>
+          <p id="dateTime"></p>
+          <img id="weatherIcon" src="" alt="Weather Icon" />
+          <div id="temperature" class="temperature"></div>
+          <p id="description" class="description"></p>
+        </div>
+
+        <div class="details">
+          <div class="detail-item">
+            <span>Độ ẩm</span>
+            <strong id="humidity"></strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Tốc độ gió</span>
+            <strong id="wind"></strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Cảm giác như</span>
+            <strong id="feelsLike"></strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Áp suất</span>
+            <strong id="pressure"></strong>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
