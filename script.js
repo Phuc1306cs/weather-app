@@ -5,6 +5,7 @@ const loading = document.getElementById("loading");
 const errorMessage = document.getElementById("errorMessage");
 const locationBtn = document.getElementById("locationBtn");
 const quickCityButtons = document.querySelectorAll(".quick-cities button");
+
 const saveLocationBtn = document.getElementById("saveLocationBtn");
 const saveStatus = document.getElementById("saveStatus");
 const savedLocationsList = document.getElementById("savedLocationsList");
@@ -12,6 +13,7 @@ const forecastList = document.getElementById("forecastList");
 
 let map = null;
 let marker = null;
+let currentWeatherData = null;
 
 searchForm.addEventListener("submit", function (event) {
   event.preventDefault();
@@ -46,14 +48,11 @@ locationBtn.addEventListener("click", function () {
 
   navigator.geolocation.getCurrentPosition(
     function (position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-
-      getWeatherByCoords(lat, lon);
+      getWeatherByCoords(position.coords.latitude, position.coords.longitude);
     },
     function () {
       hideLoading();
-      showError("Không thể lấy vị trí. Vui lòng cho phép quyền định vị trên trình duyệt.");
+      showError("Không thể lấy vị trí. Vui lòng cho phép quyền định vị.");
     },
     {
       enableHighAccuracy: true,
@@ -62,6 +61,8 @@ locationBtn.addEventListener("click", function () {
     }
   );
 });
+
+saveLocationBtn.addEventListener("click", saveCurrentLocation);
 
 window.addEventListener("load", function () {
   const lastCity = localStorage.getItem("lastCity");
@@ -73,6 +74,8 @@ window.addEventListener("load", function () {
     cityInput.value = "Ho Chi Minh";
     getWeatherByCity("Ho Chi Minh");
   }
+
+  loadSavedLocations();
 });
 
 async function getWeatherByCity(city) {
@@ -121,6 +124,8 @@ async function getWeatherByCoords(lat, lon) {
 }
 
 function displayWeather(data) {
+  currentWeatherData = data;
+
   const cityName = data.name || "Không xác định";
   const country = data.sys?.country || "";
   const weather = data.weather?.[0];
@@ -135,13 +140,13 @@ function displayWeather(data) {
     data.timezone
   );
 
-  document.getElementById("temperature").textContent = `${Math.round(data.main.temp)}°C`;
+  document.getElementById("temperature").textContent =
+    `${Math.round(data.main.temp)}°C`;
 
   document.getElementById("description").textContent =
     capitalizeFirstLetter(weather?.description || "Không có mô tả");
 
   document.getElementById("humidity").textContent = `${data.main.humidity}%`;
-
   document.getElementById("wind").textContent =
     `${Math.round(data.wind.speed * 3.6)} km/h`;
 
@@ -173,14 +178,11 @@ function displayWeather(data) {
   weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
   weatherIcon.alt = weather?.description || "Weather Icon";
 
-  weatherIcon.onerror = function () {
-    this.style.display = "none";
-  };
-
   showWeatherCard();
 
   if (coord && typeof coord.lat === "number" && typeof coord.lon === "number") {
     updateMap(coord.lat, coord.lon, cityName, country);
+    loadForecast(coord.lat, coord.lon);
   }
 }
 
@@ -216,6 +218,206 @@ function updateMap(lat, lon, cityName, country) {
   }, 100);
 }
 
+async function loadForecast(lat, lon) {
+  forecastList.innerHTML = `<p class="empty-text">Đang tải dự báo 5 ngày...</p>`;
+
+  try {
+    const response = await fetch(`/api/forecast?lat=${lat}&lon=${lon}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Không thể tải dự báo.");
+    }
+
+    renderForecast(result.daily || []);
+  } catch (error) {
+    forecastList.innerHTML = `<p class="empty-text">${error.message}</p>`;
+  }
+}
+
+function renderForecast(days) {
+  if (!days.length) {
+    forecastList.innerHTML = `<p class="empty-text">Chưa có dữ liệu dự báo.</p>`;
+    return;
+  }
+
+  forecastList.innerHTML = "";
+
+  days.forEach(function (day) {
+    const card = document.createElement("div");
+    card.className = "forecast-card";
+
+    card.innerHTML = `
+      <h4>${formatForecastDate(day.date)}</h4>
+      <img src="https://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.description}">
+      <div class="forecast-temp">${day.temp_min}°C / ${day.temp_max}°C</div>
+      <p class="forecast-desc">${capitalizeFirstLetter(day.description)}</p>
+      <div class="forecast-meta">
+        💧 ${day.humidity}%<br>
+        🌬️ ${day.wind_kmh} km/h<br>
+        🌧️ ${day.rain_chance}%
+      </div>
+    `;
+
+    forecastList.appendChild(card);
+  });
+}
+
+async function saveCurrentLocation() {
+  if (!currentWeatherData) {
+    showSaveStatus("Chưa có vị trí để lưu. Vui lòng tìm kiếm trước.", true);
+    return;
+  }
+
+  const coord = currentWeatherData.coord;
+
+  if (!coord || typeof coord.lat !== "number" || typeof coord.lon !== "number") {
+    showSaveStatus("Dữ liệu tọa độ không hợp lệ.", true);
+    return;
+  }
+
+  const city = currentWeatherData.name || "Không xác định";
+  const country = currentWeatherData.sys?.country || "";
+  const displayAddress = country ? `${city}, ${country}` : city;
+
+  const payload = {
+    client_id: getClientId(),
+    city,
+    country,
+    display_address: displayAddress,
+    latitude: coord.lat,
+    longitude: coord.lon,
+    temperature: currentWeatherData.main?.temp,
+    humidity: currentWeatherData.main?.humidity
+  };
+
+  try {
+    showSaveStatus("Đang lưu vị trí...", false);
+
+    const response = await fetch("/api/save-location", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Không thể lưu vị trí.");
+    }
+
+    showSaveStatus(`✅ Đã lưu: ${displayAddress}`, false);
+    loadSavedLocations();
+  } catch (error) {
+    showSaveStatus(`❌ ${error.message}`, true);
+  }
+}
+
+async function loadSavedLocations() {
+  try {
+    const response = await fetch(
+      `/api/saved-locations?client_id=${encodeURIComponent(getClientId())}`
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Không thể tải vị trí đã lưu.");
+    }
+
+    renderSavedLocations(result.data || []);
+  } catch (error) {
+    savedLocationsList.innerHTML =
+      `<p class="empty-text">Không thể tải danh sách vị trí đã lưu.</p>`;
+  }
+}
+
+function renderSavedLocations(locations) {
+  if (!locations.length) {
+    savedLocationsList.innerHTML =
+      `<p class="empty-text">Chưa có vị trí nào được lưu.</p>`;
+    return;
+  }
+
+  savedLocationsList.innerHTML = "";
+
+  locations.forEach(function (location) {
+    const item = document.createElement("div");
+    item.className = "saved-item";
+
+    const temp =
+      location.temperature !== null && location.temperature !== undefined
+        ? `${Math.round(location.temperature)}°C`
+        : "--";
+
+    item.innerHTML = `
+      <h4>${location.display_address || location.city || "Không xác định"}</h4>
+      <p>${temp} · Độ ẩm ${location.humidity ?? "--"}% · Lưu ${location.save_count} lần</p>
+
+      <div class="saved-actions">
+        <button type="button" class="view-saved-btn">Xem</button>
+        <button type="button" class="delete-saved-btn">Xóa</button>
+      </div>
+    `;
+
+    item.querySelector(".view-saved-btn").addEventListener("click", function () {
+      if (location.city) {
+        cityInput.value = location.city;
+        getWeatherByCity(location.city);
+      } else {
+        getWeatherByCoords(location.latitude, location.longitude);
+      }
+    });
+
+    item.querySelector(".delete-saved-btn").addEventListener("click", function () {
+      deleteSavedLocation(location.id);
+    });
+
+    savedLocationsList.appendChild(item);
+  });
+}
+
+async function deleteSavedLocation(id) {
+  try {
+    const response = await fetch("/api/saved-locations", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        client_id: getClientId(),
+        id
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Không thể xóa vị trí.");
+    }
+
+    loadSavedLocations();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function getClientId() {
+  let clientId = localStorage.getItem("weatherClientId");
+
+  if (!clientId) {
+    clientId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    localStorage.setItem("weatherClientId", clientId);
+  }
+
+  return clientId;
+}
+
 function formatCityDate(timestamp, timezoneOffset) {
   const date = new Date((timestamp + timezoneOffset) * 1000);
 
@@ -240,9 +442,18 @@ function formatCityTime(timestamp, timezoneOffset) {
   }).format(date);
 }
 
+function formatForecastDate(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit"
+  }).format(date);
+}
+
 function capitalizeFirstLetter(text) {
   if (!text) return "";
-
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -269,4 +480,9 @@ function showWeatherCard() {
 
 function hideWeatherCard() {
   weatherCard.classList.add("hidden");
+}
+
+function showSaveStatus(message, isError) {
+  saveStatus.textContent = message;
+  saveStatus.style.color = isError ? "#dc2626" : "#16a34a";
 }

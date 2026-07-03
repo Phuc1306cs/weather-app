@@ -6,7 +6,7 @@
 
   <title>Weather App - Tra cứu thời tiết</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-  <!-- Leaflet Map CSS -->
+
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -14,13 +14,8 @@
 
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="background">
-    <div class="circle circle-1"></div>
-    <div class="circle circle-2"></div>
-    <div class="circle circle-3"></div>
-  </div>
 
+<body>
   <main class="app">
     <section class="weather-container">
       <header class="header">
@@ -28,7 +23,7 @@
 
         <div>
           <h1>Weather App</h1>
-          <p>Tra cứu thời tiết hiện tại theo tên thành phố</p>
+          <p>Tra cứu thời tiết, bản đồ, dự báo và lưu vị trí yêu thích</p>
         </div>
       </header>
 
@@ -40,9 +35,7 @@
           autocomplete="off"
         />
 
-        <button type="submit">
-          🔍 Tìm kiếm
-        </button>
+        <button type="submit">🔍 Tìm kiếm</button>
       </form>
 
       <button type="button" id="locationBtn" class="location-btn">
@@ -81,51 +74,58 @@
           <p id="description" class="description">--</p>
         </div>
 
+        <div class="save-location-box">
+          <button type="button" id="saveLocationBtn">
+            💾 Lưu vị trí
+          </button>
+          <p id="saveStatus"></p>
+        </div>
+
         <div class="details-grid">
           <div class="detail-card">
-            <span class="detail-icon">💧</span>
+            <span>💧</span>
             <p>Độ ẩm</p>
             <strong id="humidity">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">🌬️</span>
+            <span>🌬️</span>
             <p>Tốc độ gió</p>
             <strong id="wind">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">🌡️</span>
+            <span>🌡️</span>
             <p>Nhiệt độ cảm nhận</p>
             <strong id="feelsLike">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">📊</span>
+            <span>📊</span>
             <p>Áp suất</p>
             <strong id="pressure">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">👁️</span>
+            <span>👁️</span>
             <p>Tầm nhìn</p>
             <strong id="visibility">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">☁️</span>
+            <span>☁️</span>
             <p>Mây che phủ</p>
             <strong id="clouds">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">🌅</span>
+            <span>🌅</span>
             <p>Mặt trời mọc</p>
             <strong id="sunrise">--</strong>
           </div>
 
           <div class="detail-card">
-            <span class="detail-icon">🌇</span>
+            <span>🌇</span>
             <p>Mặt trời lặn</p>
             <strong id="sunset">--</strong>
           </div>
@@ -143,6 +143,28 @@
 
           <div id="map"></div>
         </div>
+
+        <div class="forecast-section">
+          <div class="forecast-header">
+            <h3>Dự báo 5 ngày tiếp theo</h3>
+            <p>Dữ liệu dự báo theo chu kỳ 3 giờ</p>
+          </div>
+
+          <div id="forecastList" class="forecast-list">
+            <p class="empty-text">Chưa có dữ liệu dự báo.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="saved-section">
+        <div class="saved-header">
+          <h3>Vị trí đã lưu</h3>
+          <p>Tối đa 10 vị trí cho mỗi trình duyệt</p>
+        </div>
+
+        <div id="savedLocationsList" class="saved-list">
+          <p class="empty-text">Chưa có vị trí nào được lưu.</p>
+        </div>
       </section>
 
       <footer class="footer">
@@ -151,9 +173,7 @@
     </section>
   </main>
 
-  <!-- Leaflet Map JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script src="script.js"></script>
 </body>
 </html>
