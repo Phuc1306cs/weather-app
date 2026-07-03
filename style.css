@@ -561,3 +561,32 @@ body {
     height: 280px;
   }
 }
+.temperature-marker-wrapper {
+  background: transparent;
+  border: none;
+}
+
+.temperature-marker {
+  position: relative;
+  padding: 9px 13px;
+  border-radius: 999px;
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 10px 24px rgba(239, 68, 68, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.temperature-marker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #f97316;
+}

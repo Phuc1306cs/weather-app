@@ -181,12 +181,12 @@ function displayWeather(data) {
   showWeatherCard();
 
   if (coord && typeof coord.lat === "number" && typeof coord.lon === "number") {
-    updateMap(coord.lat, coord.lon, cityName, country);
+    updateMap(coord.lat, coord.lon, cityName, country, Math.round(data.main.temp));
     loadForecast(coord.lat, coord.lon);
   }
 }
 
-function updateMap(lat, lon, cityName, country) {
+function updateMap(lat, lon, cityName, country, temp) {
   document.getElementById("mapCoords").textContent =
     `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
 
@@ -201,16 +201,36 @@ function updateMap(lat, lon, cityName, country) {
     map.setView([lat, lon], 11);
   }
 
+  const temperatureIcon = L.divIcon({
+    className: "temperature-marker-wrapper",
+    html: `
+      <div class="temperature-marker">
+        🌡️ ${temp}°C
+      </div>
+    `,
+    iconSize: [90, 42],
+    iconAnchor: [45, 42],
+    popupAnchor: [0, -42]
+  });
+
   if (!marker) {
-    marker = L.marker([lat, lon]).addTo(map);
+    marker = L.marker([lat, lon], {
+      icon: temperatureIcon
+    }).addTo(map);
   } else {
     marker.setLatLng([lat, lon]);
+    marker.setIcon(temperatureIcon);
   }
 
   const popupTitle = country ? `${cityName}, ${country}` : cityName;
 
   marker
-    .bindPopup(`<b>${popupTitle}</b><br>Vĩ độ: ${lat.toFixed(4)}<br>Kinh độ: ${lon.toFixed(4)}`)
+    .bindPopup(`
+      <b>${popupTitle}</b><br>
+      Nhiệt độ: ${temp}°C<br>
+      Vĩ độ: ${lat.toFixed(4)}<br>
+      Kinh độ: ${lon.toFixed(4)}
+    `)
     .openPopup();
 
   setTimeout(function () {
