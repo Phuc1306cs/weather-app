@@ -1,4 +1,12 @@
 module.exports = async function handler(req, res) {
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+
+    return res.status(405).json({
+      message: "Method not allowed"
+    });
+  }
+
   const city = req.query.city?.trim();
   const lat = req.query.lat;
   const lon = req.query.lon;
@@ -17,23 +25,39 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  if (lat && lon) {
+    const latitude = Number(lat);
+    const longitude = Number(lon);
+
+    if (
+      Number.isNaN(latitude) ||
+      Number.isNaN(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message: "Tọa độ không hợp lệ."
+      });
+    }
+  }
+
   try {
-    let apiUrl = "https://api.openweathermap.org/data/2.5/weather";
+    const params = new URLSearchParams({
+      appid: apiKey,
+      units: "metric",
+      lang: "vi"
+    });
 
     if (city) {
-      apiUrl +=
-        `?q=${encodeURIComponent(city)}` +
-        `&appid=${apiKey}` +
-        "&units=metric" +
-        "&lang=vi";
+      params.set("q", city);
     } else {
-      apiUrl +=
-        `?lat=${encodeURIComponent(lat)}` +
-        `&lon=${encodeURIComponent(lon)}` +
-        `&appid=${apiKey}` +
-        "&units=metric" +
-        "&lang=vi";
+      params.set("lat", lat);
+      params.set("lon", lon);
     }
+
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?${params.toString()}`;
 
     const response = await fetch(apiUrl);
     const data = await response.json();

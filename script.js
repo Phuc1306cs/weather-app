@@ -5,6 +5,10 @@ const loading = document.getElementById("loading");
 const errorMessage = document.getElementById("errorMessage");
 const locationBtn = document.getElementById("locationBtn");
 const quickCityButtons = document.querySelectorAll(".quick-cities button");
+const saveLocationBtn = document.getElementById("saveLocationBtn");
+const saveStatus = document.getElementById("saveStatus");
+const savedLocationsList = document.getElementById("savedLocationsList");
+const forecastList = document.getElementById("forecastList");
 
 let map = null;
 let marker = null;
