@@ -19,6 +19,8 @@
 
 body {
   min-height: 100vh;
+  /* Sửa lỗi hiển thị chiều cao trên Safari iOS */
+  min-height: -webkit-fill-available; 
   font-family: Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
@@ -26,8 +28,14 @@ body {
     linear-gradient(135deg, #60a5fa, #8b5cf6);
 }
 
+/* Sửa lỗi chiều cao cho thẻ html trên iOS */
+html {
+  height: -webkit-fill-available;
+}
+
 .app {
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   padding: 22px 14px;
   display: flex;
   justify-content: center;
@@ -42,6 +50,8 @@ body {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: var(--shadow);
+  /* SỬA LỖI: Thêm tiền tố -webkit- cho Safari trên iPhone */
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
@@ -92,6 +102,8 @@ body {
   color: white;
   white-space: nowrap;
   box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+  /* SỬA LỖI: Chặn Safari tự reset bo góc nút */
+  -webkit-appearance: none;
 }
 
 /* ===== Auth panel ===== */
@@ -124,6 +136,8 @@ body {
   outline: none;
   font-size: 14px;
   background: white;
+  /* SỬA LỖI: Chặn Safari bo góc dị dạng trên thẻ input */
+  -webkit-appearance: none;
 }
 
 .auth-actions {
@@ -139,6 +153,7 @@ body {
   border-radius: 14px;
   cursor: pointer;
   font-weight: 800;
+  -webkit-appearance: none;
 }
 
 #loginBtn {
@@ -192,6 +207,7 @@ body {
   outline: none;
   font-size: 16px;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-appearance: none;
 }
 
 .search-box input:focus {
@@ -209,6 +225,7 @@ body {
   font-weight: 800;
   font-size: 15px;
   transition: 0.25s;
+  -webkit-appearance: none;
 }
 
 .search-box button {
@@ -246,6 +263,7 @@ body {
   color: #334155;
   background: rgba(255, 255, 255, 0.82);
   transition: 0.2s;
+  -webkit-appearance: none;
 }
 
 /* ===== Loading / error ===== */
@@ -357,12 +375,14 @@ body {
 }
 
 .temperature {
+  display: inline-block; /* SỬA LỖI: Bắt buộc để nhận clip-text trên iOS */
   font-size: 64px;
   font-weight: 900;
   line-height: 1;
-  letter-spacing: -5px;
+  letter-spacing: -3px; /* Giảm âm một chút tránh dính chữ trên iOS */
   background: linear-gradient(135deg, #1e3a8a, #2563eb, #7c3aed);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -591,6 +611,7 @@ body {
   border-radius: 12px;
   cursor: pointer;
   font-weight: 700;
+  -webkit-appearance: none;
 }
 
 .view-saved-btn {
@@ -626,10 +647,6 @@ body {
 
 /* =========================================================
    RESPONSIVE BREAKPOINTS
-   Desktop:            > 1050px  (styles above)
-   Tablet / small laptop: 801px – 1050px
-   Mobile:             ≤ 800px
-   Small phone:        ≤ 480px
    ========================================================= */
 
 /* ----- Tablet / small laptop ----- */
@@ -777,7 +794,7 @@ body {
 
   .temperature {
     font-size: 52px;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
   }
 
   .description {
@@ -821,6 +838,8 @@ body {
     gap: 10px;
     padding-bottom: 6px;
     scroll-snap-type: x mandatory;
+    /* SỬA LỖI: Giúp thanh cuộn mượt hơn trên iOS */
+    -webkit-overflow-scrolling: touch; 
   }
 
   .forecast-card {
