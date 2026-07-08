@@ -689,6 +689,7 @@ html {
   .weather-container {
     padding: 16px;
     border-radius: 24px;
+    width: 100%; /* Đảm bảo container không bị ép dẹt */
   }
 
   .header {
@@ -753,23 +754,25 @@ html {
     font-size: 13px;
   }
 
+  /* --- SỬA CHÍNH TẠI ĐÂY --- */
   .weather-card {
-    grid-template-columns: 1fr;
+    display: flex; /* Chuyển từ Grid sang Flexbox trên mobile để triệt tiêu hoàn toàn lỗi chia cột */
+    flex-direction: column;
     padding: 14px;
     gap: 12px;
+    width: 100%;
   }
 
+  /* Đưa toàn bộ các khối con về chiều rộng đầy đủ, không để grid-column chiếm chỗ cũ */
   .weather-top,
   .temperature-box,
   .save-location-box,
   .details-grid,
   .map-section,
   .forecast-section {
-    grid-column: 1;
-  }
-
-  .map-section {
-    grid-row: auto;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    width: 100% !important;
   }
 
   .weather-top {
@@ -801,9 +804,12 @@ html {
     font-size: 15px;
   }
 
+  /* Sửa ô chi tiết thời tiết (độ ẩm, tốc độ gió...) dàn đều 2 cột */
   .details-grid {
-    grid-template-columns: repeat(2, 1fr);
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 8px;
+    width: 100%;
   }
 
   .detail-card {
@@ -823,6 +829,7 @@ html {
   #map {
     height: 240px;
     border-radius: 18px;
+    width: 100%;
   }
 
   .map-header,
@@ -838,7 +845,6 @@ html {
     gap: 10px;
     padding-bottom: 6px;
     scroll-snap-type: x mandatory;
-    /* SỬA LỖI: Giúp thanh cuộn mượt hơn trên iOS */
     -webkit-overflow-scrolling: touch; 
   }
 
@@ -849,64 +855,5 @@ html {
 
   .saved-list {
     grid-template-columns: 1fr;
-  }
-}
-
-/* ----- Small phone ----- */
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .header-left {
-    gap: 10px;
-  }
-
-  .logo {
-    width: 46px;
-    height: 46px;
-    font-size: 23px;
-  }
-
-  .header h1 {
-    font-size: 22px;
-  }
-
-  .header p {
-    display: none;
-  }
-
-  .auth-toggle-btn {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .weather-container {
-    padding: 13px;
-  }
-
-  .weather-card {
-    padding: 12px;
-  }
-
-  .temperature {
-    font-size: 46px;
-  }
-
-  .details-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .detail-card {
-    min-height: 76px;
-  }
-
-  #map {
-    height: 220px;
-  }
-
-  .saved-actions {
-    flex-direction: row;
   }
 }
