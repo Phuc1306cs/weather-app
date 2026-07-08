@@ -16,19 +16,20 @@ module.exports = async function handler(req, res) {
     const supabase = createSupabaseClient();
 
     if (req.method === "GET") {
-      const clientId = req.query.client_id;
+      const userId = req.query.user_id;
 
-      if (!clientId) {
+      if (!userId) {
         return res.status(400).json({
-          message: "Thiếu client_id."
+          message: "Thiếu user_id."
         });
       }
 
       const { data, error } = await supabase
         .from("saved_locations")
         .select("*")
-        .eq("client_id", clientId)
-        .order("updated_at", { ascending: false });
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(10);
 
       if (error) {
         return res.status(500).json({
@@ -43,18 +44,18 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === "DELETE") {
-      const { client_id, id } = req.body || {};
+      const { user_id, id } = req.body || {};
 
-      if (!client_id || !id) {
+      if (!user_id || !id) {
         return res.status(400).json({
-          message: "Thiếu client_id hoặc id."
+          message: "Thiếu user_id hoặc id."
         });
       }
 
       const { error } = await supabase
         .from("saved_locations")
         .delete()
-        .eq("client_id", client_id)
+        .eq("user_id", user_id)
         .eq("id", id);
 
       if (error) {

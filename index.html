@@ -19,13 +19,51 @@
   <main class="app">
     <section class="weather-container">
       <header class="header">
-        <div class="logo">☁️</div>
+        <div class="header-left">
+          <div class="logo">☁️</div>
 
-        <div>
-          <h1>Weather App</h1>
-          <p>Tra cứu thời tiết, bản đồ, dự báo và lưu vị trí yêu thích</p>
+          <div>
+            <h1>Weather App</h1>
+            <p>Tra cứu thời tiết, bản đồ, dự báo và lưu vị trí yêu thích</p>
+          </div>
         </div>
+
+        <button type="button" id="authToggleBtn" class="auth-toggle-btn">
+          👤 Đăng nhập
+        </button>
       </header>
+
+      <section id="authPanel" class="auth-panel hidden">
+        <h3>Tài khoản người dùng</h3>
+
+        <div id="authForm" class="auth-form">
+          <input
+            type="text"
+            id="usernameInput"
+            placeholder="Tên đăng nhập"
+            autocomplete="username"
+          />
+
+          <input
+            type="password"
+            id="passwordInput"
+            placeholder="Mật khẩu"
+            autocomplete="current-password"
+          />
+
+          <div class="auth-actions">
+            <button type="button" id="loginBtn">Đăng nhập</button>
+            <button type="button" id="registerBtn">Đăng ký</button>
+          </div>
+        </div>
+
+        <div id="userInfo" class="user-info hidden">
+          <p>Đã đăng nhập: <strong id="currentUsername">--</strong></p>
+          <button type="button" id="logoutBtn">Đăng xuất</button>
+        </div>
+
+        <p id="authStatus"></p>
+      </section>
 
       <form id="searchForm" class="search-box">
         <input
@@ -159,7 +197,7 @@
       <section class="saved-section">
         <div class="saved-header">
           <h3>Vị trí đã lưu</h3>
-          <p>Tối đa 10 vị trí cho mỗi trình duyệt</p>
+          <p>Tối đa 10 vị trí cho mỗi tài khoản</p>
         </div>
 
         <div id="savedLocationsList" class="saved-list">

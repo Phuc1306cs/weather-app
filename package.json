@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
-    "vercel": "^54.20.0"
+    "bcryptjs": "^3.0.3"
   },
   "repository": {
     "type": "git",
@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/Phuc1306cs/weather-app/issues"
   },
-  "homepage": "https://github.com/Phuc1306cs/weather-app#readme"
+  "homepage": "https://github.com/Phuc1306cs/weather-app#readme",
+  "devDependencies": {
+    "vercel": "^54.21.1"
+  }
 }

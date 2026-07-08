@@ -1,6 +1,6 @@
 const { createClient } = require("@supabase/supabase-js");
 
-const MAX_LOCATIONS_PER_CLIENT = 10;
+const MAX_LOCATIONS_PER_USER = 10;
 
 function createSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
     const supabase = createSupabaseClient();
 
     const {
-      client_id,
+      user_id,
       city,
       country,
       display_address,
@@ -47,11 +47,11 @@ module.exports = async function handler(req, res) {
       longitude,
       temperature,
       humidity
-    } = req.body;
+    } = req.body || {};
 
-    if (!client_id || latitude === undefined || longitude === undefined) {
+    if (!user_id || latitude === undefined || longitude === undefined) {
       return res.status(400).json({
-        message: "Thiếu client_id hoặc tọa độ vị trí."
+        message: "Thiếu user_id hoặc tọa độ vị trí."
       });
     }
 
@@ -60,12 +60,12 @@ module.exports = async function handler(req, res) {
     const { data: existingLocation } = await supabase
       .from("saved_locations")
       .select("save_count")
-      .eq("client_id", String(client_id))
+      .eq("user_id", String(user_id))
       .eq("location_key", locationKey)
       .maybeSingle();
 
     const payload = {
-      client_id: String(client_id),
+      user_id: String(user_id),
       location_key: locationKey,
       city: city ? String(city) : null,
       country: country ? String(country) : null,
@@ -83,7 +83,7 @@ module.exports = async function handler(req, res) {
     const { data, error } = await supabase
       .from("saved_locations")
       .upsert(payload, {
-        onConflict: "client_id,location_key"
+        onConflict: "user_id,location_key"
       })
       .select()
       .single();
@@ -98,12 +98,12 @@ module.exports = async function handler(req, res) {
     const { data: allLocations } = await supabase
       .from("saved_locations")
       .select("id")
-      .eq("client_id", payload.client_id)
+      .eq("user_id", payload.user_id)
       .order("updated_at", { ascending: false });
 
-    if (allLocations && allLocations.length > MAX_LOCATIONS_PER_CLIENT) {
+    if (allLocations && allLocations.length > MAX_LOCATIONS_PER_USER) {
       const oldLocationIds = allLocations
-        .slice(MAX_LOCATIONS_PER_CLIENT)
+        .slice(MAX_LOCATIONS_PER_USER)
         .map((item) => item.id);
 
       await supabase

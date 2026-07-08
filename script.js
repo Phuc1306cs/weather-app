@@ -11,6 +11,18 @@ const saveStatus = document.getElementById("saveStatus");
 const savedLocationsList = document.getElementById("savedLocationsList");
 const forecastList = document.getElementById("forecastList");
 
+const usernameInput = document.getElementById("usernameInput");
+const passwordInput = document.getElementById("passwordInput");
+const loginBtn = document.getElementById("loginBtn");
+const registerBtn = document.getElementById("registerBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const authForm = document.getElementById("authForm");
+const userInfo = document.getElementById("userInfo");
+const currentUsername = document.getElementById("currentUsername");
+const authStatus = document.getElementById("authStatus");
+const authToggleBtn = document.getElementById("authToggleBtn");
+const authPanel = document.getElementById("authPanel");
+
 let map = null;
 let marker = null;
 let currentWeatherData = null;
@@ -63,8 +75,14 @@ locationBtn.addEventListener("click", function () {
 });
 
 saveLocationBtn.addEventListener("click", saveCurrentLocation);
+loginBtn.addEventListener("click", loginUser);
+registerBtn.addEventListener("click", registerUser);
+logoutBtn.addEventListener("click", logoutUser);
+authToggleBtn.addEventListener("click", toggleAuthPanel);
 
 window.addEventListener("load", function () {
+  updateAuthUI();
+
   const lastCity = localStorage.getItem("lastCity");
 
   if (lastCity) {
@@ -283,7 +301,140 @@ function renderForecast(days) {
   });
 }
 
+function toggleAuthPanel() {
+  authPanel.classList.toggle("hidden");
+}
+
+async function registerUser() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!username || !password) {
+    showAuthStatus("Vui lòng nhập tên đăng nhập và mật khẩu.", true);
+    return;
+  }
+
+  try {
+    showAuthStatus("Đang đăng ký...", false);
+
+    const response = await fetch("/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Đăng ký thất bại.");
+    }
+
+    localStorage.setItem("weatherUser", JSON.stringify(result.user));
+    passwordInput.value = "";
+
+    updateAuthUI();
+    authPanel.classList.add("hidden");
+    loadSavedLocations();
+
+    showAuthStatus("✅ Đăng ký và đăng nhập thành công.", false);
+  } catch (error) {
+    showAuthStatus(`❌ ${error.message}`, true);
+  }
+}
+
+async function loginUser() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!username || !password) {
+    showAuthStatus("Vui lòng nhập tên đăng nhập và mật khẩu.", true);
+    return;
+  }
+
+  try {
+    showAuthStatus("Đang đăng nhập...", false);
+
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Đăng nhập thất bại.");
+    }
+
+    localStorage.setItem("weatherUser", JSON.stringify(result.user));
+    passwordInput.value = "";
+
+    updateAuthUI();
+    authPanel.classList.add("hidden");
+    loadSavedLocations();
+
+    showAuthStatus("✅ Đăng nhập thành công.", false);
+  } catch (error) {
+    showAuthStatus(`❌ ${error.message}`, true);
+  }
+}
+
+function logoutUser() {
+  localStorage.removeItem("weatherUser");
+  updateAuthUI();
+  loadSavedLocations();
+  showAuthStatus("Đã đăng xuất.", false);
+}
+
+function getCurrentUser() {
+  const user = localStorage.getItem("weatherUser");
+
+  if (!user) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(user);
+  } catch {
+    localStorage.removeItem("weatherUser");
+    return null;
+  }
+}
+
+function updateAuthUI() {
+  const user = getCurrentUser();
+
+  if (user) {
+    authForm.classList.add("hidden");
+    userInfo.classList.remove("hidden");
+    currentUsername.textContent = user.username;
+    authToggleBtn.textContent = `👤 ${user.username}`;
+  } else {
+    authForm.classList.remove("hidden");
+    userInfo.classList.add("hidden");
+    currentUsername.textContent = "--";
+    authToggleBtn.textContent = "👤 Đăng nhập";
+  }
+}
+
+function showAuthStatus(message, isError) {
+  authStatus.textContent = message;
+  authStatus.style.color = isError ? "#dc2626" : "#16a34a";
+}
+
 async function saveCurrentLocation() {
+  const user = getCurrentUser();
+
+  if (!user) {
+    showSaveStatus("Bạn cần đăng nhập trước khi lưu vị trí.", true);
+    authPanel.classList.remove("hidden");
+    return;
+  }
+
   if (!currentWeatherData) {
     showSaveStatus("Chưa có vị trí để lưu. Vui lòng tìm kiếm trước.", true);
     return;
@@ -301,7 +452,7 @@ async function saveCurrentLocation() {
   const displayAddress = country ? `${city}, ${country}` : city;
 
   const payload = {
-    client_id: getClientId(),
+    user_id: user.id,
     city,
     country,
     display_address: displayAddress,
@@ -336,9 +487,17 @@ async function saveCurrentLocation() {
 }
 
 async function loadSavedLocations() {
+  const user = getCurrentUser();
+
+  if (!user) {
+    savedLocationsList.innerHTML =
+      `<p class="empty-text">Vui lòng đăng nhập để xem vị trí đã lưu.</p>`;
+    return;
+  }
+
   try {
     const response = await fetch(
-      `/api/saved-locations?client_id=${encodeURIComponent(getClientId())}`
+      `/api/saved-locations?user_id=${encodeURIComponent(user.id)}`
     );
 
     const result = await response.json();
@@ -400,6 +559,14 @@ function renderSavedLocations(locations) {
 }
 
 async function deleteSavedLocation(id) {
+  const user = getCurrentUser();
+
+  if (!user) {
+    alert("Bạn cần đăng nhập để xóa vị trí.");
+    authPanel.classList.remove("hidden");
+    return;
+  }
+
   try {
     const response = await fetch("/api/saved-locations", {
       method: "DELETE",
@@ -407,7 +574,7 @@ async function deleteSavedLocation(id) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        client_id: getClientId(),
+        user_id: user.id,
         id
       })
     });
@@ -422,20 +589,6 @@ async function deleteSavedLocation(id) {
   } catch (error) {
     alert(error.message);
   }
-}
-
-function getClientId() {
-  let clientId = localStorage.getItem("weatherClientId");
-
-  if (!clientId) {
-    clientId = crypto.randomUUID
-      ? crypto.randomUUID()
-      : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-    localStorage.setItem("weatherClientId", clientId);
-  }
-
-  return clientId;
 }
 
 function formatCityDate(timestamp, timezoneOffset) {
