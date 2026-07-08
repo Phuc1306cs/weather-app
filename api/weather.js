@@ -1,3 +1,35 @@
+const https = require("https");
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (response) => {
+        let body = "";
+
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+
+        response.on("end", () => {
+          try {
+            const data = JSON.parse(body);
+
+            resolve({
+              statusCode: response.statusCode,
+              ok: response.statusCode >= 200 && response.statusCode < 300,
+              data
+            });
+          } catch (error) {
+            reject(new Error("Không thể phân tích dữ liệu từ OpenWeather."));
+          }
+        });
+      })
+      .on("error", (error) => {
+        reject(error);
+      });
+  });
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -42,19 +74,20 @@ module.exports = async function handler(req, res) {
     const apiUrl =
       `https://api.openweathermap.org/data/2.5/weather?${params.toString()}`;
 
-    const response = await fetch(apiUrl);
-    const data = await response.json();
+    const result = await fetchJson(apiUrl);
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        message: data.message || "Không thể lấy dữ liệu thời tiết."
+    if (!result.ok) {
+      return res.status(result.statusCode).json({
+        message: result.data.message || "Không thể lấy dữ liệu thời tiết.",
+        detail: result.data
       });
     }
 
-    return res.status(200).json(data);
+    return res.status(200).json(result.data);
   } catch (error) {
     return res.status(500).json({
-      message: "Không thể kết nối đến OpenWeather API."
+      message: "Không thể kết nối đến OpenWeather API.",
+      detail: error.message
     });
   }
 };
