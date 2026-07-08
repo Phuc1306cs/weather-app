@@ -1,32 +1,57 @@
 const https = require("https");
+const dns = require("dns");
 
-function fetchJson(url) {
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
+function fetchOpenWeather(path) {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, (response) => {
-        let body = "";
+    const options = {
+      hostname: "api.openweathermap.org",
+      port: 443,
+      path,
+      method: "GET",
+      family: 4,
+      timeout: 15000,
+      headers: {
+        "User-Agent": "weather-app/1.0"
+      }
+    };
 
-        response.on("data", (chunk) => {
-          body += chunk;
-        });
+    const request = https.request(options, (response) => {
+      let body = "";
 
-        response.on("end", () => {
-          try {
-            const data = JSON.parse(body);
+      response.setEncoding("utf8");
 
-            resolve({
-              statusCode: response.statusCode,
-              ok: response.statusCode >= 200 && response.statusCode < 300,
-              data
-            });
-          } catch (error) {
-            reject(new Error("Không thể phân tích dữ liệu từ OpenWeather."));
-          }
-        });
-      })
-      .on("error", (error) => {
-        reject(error);
+      response.on("data", (chunk) => {
+        body += chunk;
       });
+
+      response.on("end", () => {
+        try {
+          const data = JSON.parse(body);
+
+          resolve({
+            ok: response.statusCode >= 200 && response.statusCode < 300,
+            statusCode: response.statusCode,
+            data
+          });
+        } catch (error) {
+          reject(new Error("Không thể phân tích dữ liệu từ OpenWeather."));
+        }
+      });
+    });
+
+    request.on("timeout", () => {
+      request.destroy(new Error("Kết nối OpenWeather bị timeout."));
+    });
+
+    request.on("error", (error) => {
+      reject(error);
+    });
+
+    request.end();
   });
 }
 
@@ -71,10 +96,9 @@ module.exports = async function handler(req, res) {
       params.set("lon", lon);
     }
 
-    const apiUrl =
-      `https://api.openweathermap.org/data/2.5/weather?${params.toString()}`;
+    const path = `/data/2.5/weather?${params.toString()}`;
 
-    const result = await fetchJson(apiUrl);
+    const result = await fetchOpenWeather(path);
 
     if (!result.ok) {
       return res.status(result.statusCode).json({
